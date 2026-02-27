@@ -4,7 +4,6 @@
 # 🚀 initHACK
 
 ![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Tool Category](https://img.shields.io/badge/Category-Pentesting-red.svg)
 
 **initHACK** is a modern, interactive automation tool designed to streamline the initial enumeration phase of a penetration test. Written in Python, it replaces clunky manual commands with a beautiful CLI that handles directory creation, OS fingerprinting, and multi-stage Nmap scanning.

@@ -1,100 +1,81 @@
-# initHACK: Automate Pentesting Folder Setup and Nmap Scans.
 
-This Python script streamlines the initial setup for penetration testing by automating folder creation and Nmap scan configuration. It saves you time by handling repetitive tasks, allowing you to focus on the actual testing process.
+---
 
-## Features
+# 🚀 initHACK
 
-* Check the target's OS (Linux/Windows).
-* Create testing environment folders (Content, Exploits & Nmap), with the ability to create more folders if specified.
-* Perform an Nmap scan to find open ports.
-* Perform a full Nmap scan on the specified ports.
+![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Tool Category](https://img.shields.io/badge/Category-Pentesting-red.svg)
 
-## Pre-requisites
+**initHACK** is a modern, interactive automation tool designed to streamline the initial enumeration phase of a penetration test. Written in Python, it replaces clunky manual commands with a beautiful CLI that handles directory creation, OS fingerprinting, and multi-stage Nmap scanning.
 
-Ensure you have the following Python libraries installed:
+---
 
-sys
-subprocess
-re
-art
-signal
-ipaddress
-termcolor
-You can install the required libraries using pip:
+## ✨ Features
+
+*   **Interactive UI:** Powered by `Questionary` and `Rich`. No more typing numbers—use your arrow keys to navigate menus.
+*   **Smart OS Detection:** Automatically estimates the target OS (Linux/Windows) by analyzing ICMP TTL values from a ping request.
+*   **Automated Workflow:**
+    *   **Phase 1:** Creates a standardized project structure (`nmap/`, `content/`, `exploits/`).
+    *   **Phase 2:** Performs a fast "All Ports" stealth scan to find open gates.
+    *   **Phase 3:** Automatically parses results to launch a targeted "Deep Scan" (Service Versions/Default Scripts).
+*   **Persistent Target IP:** Remembers your Target IP throughout the session so you only have to enter it once.
+*   **Clean Exits:** Handles `Ctrl+C` gracefully without messy Python error traces.
+
+---
+
+## 🛠️ Installation
+
+### 1. Prerequisites
+You must have `nmap` installed on your system:
 ```bash
-pip install art termcolor
+sudo apt update && sudo apt install nmap -y
 ```
 
-## Getting Started
-
-Clone the repository:
+### 2. Clone the Repository
 ```bash
-git clone https://github.com/W1nz4c4r/initHACK.git
+git clone https://github.com/Z4kr-Sec/initHACK.git
 cd initHACK
 ```
-## Usage
 
-Run the script 
-
+### 3. Install Python Dependencies
 ```bash
-python3 /opt/initHACK.py 
+pip install -r requirements.txt
 ```
 
+---
 
-![alt text](initHACK.png)
+## 🚀 Usage
 
-
-
-### Option 1: Scan the target for OS
-
-![alt text](option1.png)
-
-This will ping the target machine. Based on the *TTL response*, the script will determine the target's *OS*.
-
-### Options 2: Create Directories
-
-This will create the working directories commonly used in a pentest, with the possibility of creating extra directories if needed. The directories created will be:
-
-* nmap
-* content
-* exploits
-
-![alt text](option2.png)
-
-
-### Option 3: Scan for open ports
-This option will perform an Nmap scan looking for the open ports on the specified target.
+Since Nmap requires root privileges for stealth scans (`-sS`), run the script with `sudo`:
 
 ```bash
-sudo nmap -p- --open -sS -vvv -n -Pn  10.10.11.13 -oN nmap/OP_ports
+sudo python3 init-hack.py
 ```
 
-* **-p-** --> scan entire range of ports 
-* **--open** --> Only show open (or possibly open) ports
-* **-sS** -->  TCP SYN scan
-* **-vvv** --> verbosity level 
-* **-n** --> Never do DNS resolution
-* **-Pn** --> skip host discovery
-* **-oN** --> normal output
+### The Standard Workflow:
+1.  **Select Option 2:** Automatically set up your `nmap`, `content`, and `exploits` folders.
+2.  **Select Option 1:** Identify if the target is Linux or Windows.
+3.  **Select Option 3:** Launch the fast port discovery scan.
+4.  **Select Option 4:** The script will automatically read the found ports and start a deep service/script scan.
 
-![alt text](option3.png)
+---
 
-### Option 4: Perform a full scan on the target
-This option will perform a full scan over the open ports previously found.
-
-```bash
-sudo nmap -sS -sV -sC -p22,80,8000 -Pn -n -vvv 10.10.11.13 -oA nmap/allPorts
+## 📂 Project Structure Created
+When you use the directory creation feature, the tool generates:
+```text
+.
+├── content/      # For web files, notes, or raw data
+├── exploits/     # For Proof of Concepts and downloaded scripts
+└── nmap/         # For all Nmap scan results
 ```
-* **-sS**: TCP SYN scan
-* **-sV**: Version detection
-* **-sC**: Run default scripts
-* **-p**: Ports to scan
-* **-Pn**: Skip host discovery
-* **-n**: Never do DNS resolution
-* **-vvv**: Verbosity level
-* **-oA**: Output in three major formats
 
-![alt text](option4.png)
+---
 
-***Credits:** Inspired by s4vitar's work. I just wanted to make a more presonalized version that fits more to how im used to work. Please, Feel free to reach out if you have any questions or suggestions for improvement!
+## ⚖️ License & Disclaimer
+This tool is for **educational and ethical testing purposes only**. Usage of initHACK against targets without prior mutual consent is illegal. The author is not responsible for any misuse or damage caused by this tool.
 
+Distributed under the MIT License. 
+
+---
+**Developed by [Z4kr](https://github.com/Z4kr-Sec)**

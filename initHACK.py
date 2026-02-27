@@ -17,7 +17,7 @@ console = Console()
 # --- Configuration & Styling ---
 def print_banner():
     ascii_art = text2art("Init-Hack", font='tarty1')
-    console.print(f"[magenta]{ascii_art}[/magenta]")
+    console.print(f"[green]{ascii_art}[/green]")
     console.print("[bold cyan]By: W1nz4c4r[/bold cyan] | [dim]https://github.com/W1nz4c4r/initHACK[/dim]\n")
 
 # --- Logic Functions ---
@@ -64,7 +64,7 @@ def check_os(ip):
         console.print(f"[red][!] Error: {e}[/red]")
 
 def create_directories():
-    extra = Prompt.ask("[magenta][*][/magenta] Extra directories? (comma separated)", default="")
+    extra = Prompt.ask("[white]Creating nmap, content and explots diretories[/white]\n[magenta][*][/magenta] Extra directories? (comma separated)", default="")
     dirs = ["nmap", "content", "exploits"]
     if extra:
         dirs.extend([d.strip() for d in extra.split(",") if d.strip()])

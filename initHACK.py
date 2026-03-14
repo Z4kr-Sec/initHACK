@@ -1,227 +1,148 @@
 #!/usr/bin/python3
-#-------Author-------------
-#W1nz4c4r
-#--------------------------
 import sys
 import subprocess
 import re
-from art import text2art, FONT_NAMES
 import signal
 import ipaddress
-from termcolor import colored
+from art import text2art
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.prompt import Prompt
+import questionary
 
+# Initialize Rich Console
+console = Console()
 
+# --- Configuration & Styling ---
+def print_banner():
+    ascii_art = text2art("Init-Hack", font='tarty1')
+    console.print(f"[green]{ascii_art}[/green]")
+    console.print("[bold cyan]By: W1nz4c4r[/bold cyan] | [dim]https://github.com/W1nz4c4r/initHACK[/dim]\n")
 
+# --- Logic Functions ---
 
-Begin_cmd = colored("[*] > ", "yellow", attrs=["bold"])
-Alert_cmd = colored("[!] > ", "red", attrs=["bold"])
-OS_cmd = colored('[Check OS] > ', "cyan", attrs=["bold"])
-Direc_cmd = colored('[Create Dirs] > ', "magenta", attrs=["bold"])
-Scan_cmd =colored('[Scanner] > ', "blue", attrs=["bold"])
-Full_Scan_cmd =colored('[Scanner Full] > ', "blue", attrs=["bold"])
-
-#handler for using Ctrl + C 
 def signal_handler(sig, frame):
-    print(colored("\n[-] Exiting program...Happy Hacking :)", "red", attrs=['reverse','bold']))
-    # Perform any necessary cleanup here
+    console.print("\n[bold red][-] Exiting program... Happy Hacking :)[/bold red]")
     sys.exit(0)
 
-# Register the signal handler
 signal.signal(signal.SIGINT, signal_handler)
 
-#Displays the name of the tool
-def Print_Name():
-    ascii_art = text2art("Init-Hack", font='tarty1')
-    print(ascii_art)
-    print(colored('By: W1nz4c4r --> https://github.com/W1nz4c4r/initHACK  \n\n','magenta',  attrs=['bold']))
-
-#will display the OS on the scan machine based on its ttl
-def showInfo(value, ttl):
-    if value == 1:
-        print( OS_cmd + 'Machine type: ' + colored('LINUX','cyan', attrs=['underline']))
-        print("\t" + colored('[+]','green', attrs=['bold']) + " Machine TTL --> {}".format(ttl))
-    elif value == 2:
-        print( OS_cmd + 'Machine type: ' + colored('WINDOWS','cyan', attrs=['underline']))
-        print("\t" + colored('[+]','green', attrs=['bold']) + " Machine TTL --> {}".format(ttl))
-
-#verify if the ip provided is valid or not
-def is_Valid_ip(ip):
+def is_valid_ip(ip):
     try:
-        ip_obj = ipaddress.ip_address(ip)
-        if ip == "0.0.0.0":
-            raise ValueError("Invalid IP address: 0.0.0.0 is not allowed.")
+        if ip == "0.0.0.0": return False
+        ipaddress.ip_address(ip)
         return True
-    except ValueError as ve:
-        #print(f"Invalid IP address: {ve}")
+    except ValueError:
         return False
 
-
-    
-#This will Determine the OS of the machine IP provided
-def Check_OS(machine_ip):
-    #get machine IP
-    #enter ip of the machine you wish to check
-    machine_ip = input("\n" + OS_cmd +"Enter IP you wish to scan: ")
-    if is_Valid_ip(machine_ip):
-        #running the ping -c1 IP and checking the ttl to define the system
-        process = subprocess.Popen(["ping -c1 {}".format(machine_ip)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        result, error = process.communicate()
-        result = result.decode("utf-8")
-        result = result.split()
-        result = result[12].split('=')
-        result = int(result[1])
-        #checking the ttl
-        if result >= 0 and result <= 64:
-            #linux machine
-            showInfo(1, result)
-            return machine_ip
-        elif result >= 65 and result <= 128:
-            #Windows machine
-            showInfo(2, result)
-            return machine_ip
-    else:
-        print(colored("Please enter a valid IP address!", "red", attrs=["bold"]))
-        Check_OS()
-
-#this will create the working directories I use on a pentest
-# Directories created: nmap, content and Exploits 
-def Create_Direcotires():
-    #check if more directories are wanted
-    print(Direc_cmd + 'Do you want to create more directories? (Default: nmap, content & exploits)')
-    extra_dic = input(Direc_cmd + 'Press enter to continue or write the names of the extra directories \t(Use comma (,) for multile directories)\n')
-    print(Direc_cmd + colored('Creating working directories...'))
-    #creating extra directories if user wants
-    if  extra_dic.strip():
-            extra_list_dic= extra_dic.split(',')
-            for i in range(len(extra_list_dic)):
-                #if the input is empty do not create folder
-                if not extra_list_dic[i].strip():
-                    #print('This is empty!')
-                    #print(extra_list_dic[i])
-                    pass
-                else:
-                    #creating directories 
-                    extra_command = "mkdir {} 2>/dev/null".format(extra_list_dic[i])
-                    extra_Proc = subprocess.run([extra_command], shell=True)
-                    #print(extra_list_dic[i])
-    #making nmap
-    nmap_Proc = subprocess.run(["mkdir nmap 2>/dev/null"], shell=True)
-    #making contect forlder
-    cont_Proc = subprocess.run(["mkdir content 2>/dev/null"], shell=True)
-    #making exploits forlder
-    exp_Proc = subprocess.run(["mkdir exploits 2>/dev/null"], shell=True)
-    print(Direc_cmd + "Creating folders -> " + colored("DONE",'green'))
-
-# This will start the scan only looking open ports
-#if ip_Bool is False --> then no IP has been provided
-#if ip_Bool is True --> IP has been provided 
-def Scan_Open_Ports(machine_ip):
-    #print('Valid ' + machine_ip)  
-    
-    scan_command = "sudo nmap -p- --open -sS -vvv -n -Pn  {} -oN nmap/OP_ports".format(machine_ip)
-    print(Scan_cmd + scan_command)
+def check_os(ip):
+    console.print(f"[yellow][*][/yellow] Checking OS for [bold]{ip}[/bold]...")
     try:
-        #start the scan for possible open ports
-        #subprocess.run(scan_command,shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) --> USER THIS TO NOT SHOW OUTPUT FROM THE SCAN
-        subprocess.run(scan_command,shell=True)
-        print(Scan_cmd + 'Scan for open ports...' + colored('DONE','green',attrs=['underline']))
-        #print()
+        # Run ping command
+        process = subprocess.run(["ping", "-c", "1", ip], capture_output=True, text=True)
+        if process.returncode != 0:
+            console.print("[red][!] Target is unreachable.[/red]")
+            return
+        
+        # Extract TTL
+        ttl_match = re.search(r"ttl=(\d+)", process.stdout, re.IGNORECASE)
+        if ttl_match:
+            ttl = int(ttl_match.group(1))
+            os_name = "LINUX" if ttl <= 64 else "WINDOWS" if ttl <= 128 else "UNKNOWN"
+            
+            table = Table(title="Target Information", style="cyan")
+            table.add_column("Property", style="bold")
+            table.add_column("Value")
+            table.add_row("IP Address", ip)
+            table.add_row("TTL", str(ttl))
+            table.add_row("Estimated OS", f"[bold green]{os_name}[/bold green]")
+            console.print(table)
+        else:
+            console.print("[red][!] Could not determine TTL.[/red]")
     except Exception as e:
-        print(e)
+        console.print(f"[red][!] Error: {e}[/red]")
 
+def create_directories():
+    extra = Prompt.ask("[white]Creating nmap, content and explots diretories[/white]\n[magenta][*][/magenta] Extra directories? (comma separated)", default="")
+    dirs = ["nmap", "content", "exploits"]
+    if extra:
+        dirs.extend([d.strip() for d in extra.split(",") if d.strip()])
+    
+    for d in dirs:
+        subprocess.run(["mkdir", "-p", d])
+    console.print(f"[green][+] Created:[/green] {', '.join(dirs)}")
 
-#this will create the full Nmap command to perform a deep scan on specified ports
-def Full_scan(machine_ip):
-    #full scan command
+def scan_ports(ip):
+    console.print(f"[blue][*][/blue] Starting fast port scan on {ip}...")
+    cmd = f"sudo nmap -p- --open -sS -vvv -n -Pn {ip} -oN nmap/OP_ports"
+    subprocess.run(cmd, shell=True)
+    console.print("[bold green][+] Initial scan complete. Results saved to nmap/OP_ports[/bold green]")
 
-    # Run the Bash pipeline in Python using subprocess.Popen
-    #after running all this commands the script will get the open ports from the file located in  ./nmap/OP_ports
-    cat = subprocess.Popen(['cat', 'nmap/OP_ports'], stdout=subprocess.PIPE)
-    grep = subprocess.Popen(['grep', 'open'], stdin=cat.stdout, stdout=subprocess.PIPE)
-    awk1 = subprocess.Popen(['awk', '{ print $1 }'], stdin=grep.stdout, stdout=subprocess.PIPE)
-    awk2 = subprocess.Popen(['awk', '{print ($0+0)}'], stdin=awk1.stdout, stdout=subprocess.PIPE)
-    sed = subprocess.Popen(['sed', '-z', 's/\\n/,/g;s/,$/\\n/'], stdin=awk2.stdout, stdout=subprocess.PIPE)
+def full_scan(ip):
+    console.print("[blue][*][/blue] Extracting ports and starting deep scan...")
+    try:
+        with open("nmap/OP_ports", "r") as f:
+            content = f.read()
+        
+        # Pure Python regex to find open ports (cleaner than awk/sed)
+        ports = re.findall(r"(\d+)/tcp\s+open", content)
+        
+        if not ports:
+            console.print("[red][!] No open ports found in nmap/OP_ports. Run option 3 first?[/red]")
+            return
 
-    cat.stdout.close()
-    grep.stdout.close()
-    awk1.stdout.close()
-    awk2.stdout.close()
+        ports_str = ",".join(ports)
+        console.print(f"[green][+] Found ports:[/green] [bold]{ports_str}[/bold]")
+        
+        cmd = f"sudo nmap -sS -sV -sC -p{ports_str} -Pn -n -vvv {ip} -oA nmap/allPorts"
+        subprocess.run(cmd, shell=True)
+    except FileNotFoundError:
+        console.print("[red][!] nmap/OP_ports not found. Run a scan first![/red]")
 
-    output, error = sed.communicate()
-    if sed.returncode == 0:
-        #ignore port 0 given and add everything to the nmap command
-        open_ports = output.decode().strip().split(',')
-        open_ports = open_ports[1:]
-        ports_string = ','.join(str(x) for x in open_ports)
-        print(Full_Scan_cmd, "Open ports found :", colored(ports_string, 'green', attrs=['bold']))
-        Full_Scan_command = "sudo nmap -sS -sV -sC -p{} -Pn -n -vvv {} -oA nmap/allPorts ".format(ports_string,machine_ip)
-        print(Full_Scan_cmd, Full_Scan_command)
-        subprocess.run(Full_Scan_command,shell=True)
-        print (Full_Scan_cmd + 'Full scan of target...' + colored('DONE','green',attrs=['underline']))
-
-
-    else:
-        print(Scan_cmd, "Error processing open ports:", error.decode().strip())
-        print(Alert_cmd, 'Make sure you already scan for open ports (nmap/OP_ports)')
-
-
-#display instructions
-def show_help():
-    print(colored("\nHelp Menu:\n", "yellow", attrs=["bold"]))  
-    print(colored("1:", "yellow", attrs=["bold"]) + " Check machine OS")
-    print(colored("2:", "yellow", attrs=["bold"]) + " Create working Directories")
-    print(colored("3:", "yellow", attrs=["bold"]) + " Scan open ports on target")
-    print(colored("4:", "yellow", attrs=["bold"]) + " Perform full scan on specified ports")
-    print(colored("5:", "yellow", attrs=["bold"]) + " Exit program")
-    print(colored("\nType 'help' to display this menu again.\n","green", attrs=["underline", 'bold']))
+# --- Main App ---
 
 def main():
-    show_help()
-    machine_ip = '0.0.0.0'
-    User_choice = input(Begin_cmd + "please select an option: ")
+    print_banner()
+    target_ip = None
+
     while True:
-        if User_choice == '1' : 
-            # check machine OS
-            machine_ip = Check_OS(machine_ip)
-            User_choice = input(Begin_cmd)
-        elif User_choice == '2':
-            #Create working directories 
-            Create_Direcotires()
-            User_choice = input(Begin_cmd)
-        elif User_choice == '3':
-            # Scan machine for open targets
-            while machine_ip == '0.0.0.0'or not is_Valid_ip(machine_ip):
-                machine_ip = input(Scan_cmd + 'Please enter the IP: ').strip()
-                if not is_Valid_ip(machine_ip) :
-                    print(Alert_cmd , 'Please enter a valid IP!')
-                    print(Alert_cmd , 'NOTE: 0.0.0.0 does not count as valid IP')
-            Scan_Open_Ports(machine_ip)
-            User_choice = input(Begin_cmd)
-        elif User_choice == '4':
-            #this will perform Full_scan
+        # Using questionary for a professional interactive menu
+        choice = questionary.select(
+            "What would you like to do?",
+            choices=[
+                "1. Check Machine OS",
+                "2. Create Project Directories",
+                "3. Scan Open Ports (Nmap Fast)",
+                "4. Perform Full Service Scan (Nmap Deep)",
+                "5. Set/Change Target IP",
+                "Exit"
+            ]
+        ).ask()
 
-            while machine_ip == '0.0.0.0'or not is_Valid_ip(machine_ip):
-                machine_ip = input(Full_Scan_cmd + 'Please enter the IP: ').strip()
-                if not is_Valid_ip(machine_ip) :
-                    print(Alert_cmd , 'Please enter a valid IP!')
-                    print(Alert_cmd , 'NOTE: 0.0.0.0 does not count as valid IP')
-            Full_scan(machine_ip)
-            User_choice = input(Begin_cmd)
+        if choice == "Exit":
+            console.print("[red]Happy Hacking! Bye.[/red]")
+            break
 
-        elif User_choice == '5':
-            #exit the program
-            print(colored("\n[-] Exiting program...Happy Hacking :)", "red", attrs=['reverse','bold']))
-            # Perform any necessary cleanup here
-            sys.exit(0)
-        elif User_choice.strip().lower() == 'help':
-            show_help()
-            User_choice = input(Begin_cmd)
+        # IP management
+        if choice in ["1. Check Machine OS", "3. Scan Open Ports (Nmap Fast)", "4. Perform Full Service Scan (Nmap Deep)"]:
+            if not target_ip:
+                target_ip = Prompt.ask("[yellow][?][/yellow] Enter Target IP")
+                while not is_valid_ip(target_ip):
+                    target_ip = Prompt.ask("[red][!] Invalid IP. Enter again[/red]")
 
-        else:
-            print(Alert_cmd + 'Please enter a valid input!\n'+ Alert_cmd + 'Note: type help to show all options')
-            User_choice = input(Begin_cmd)
+        if "1." in choice:
+            check_os(target_ip)
+        elif "2." in choice:
+            create_directories()
+        elif "3." in choice:
+            scan_ports(target_ip)
+        elif "4." in choice:
+            full_scan(target_ip)
+        elif "5." in choice:
+            target_ip = Prompt.ask("[yellow][?][/yellow] Enter New Target IP")
+            if is_valid_ip(target_ip):
+                console.print(f"[green][+] Target updated to: {target_ip}[/green]")
 
-
-if __name__ == '__main__':
-    Print_Name()
+if __name__ == "__main__":
     main()
